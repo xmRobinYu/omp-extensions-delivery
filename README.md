@@ -6,7 +6,7 @@
 
 ## 这是什么
 
-`delivery` 是 [Oh My Pi (omp)](https://github.com/) 的一个扩展，在 `session_stop` 钩子上自动评审 AI 编码代理的当前任务是否真正完成。
+`delivery` 是 Oh My Pi (omp) 的一个扩展，在 `session_stop` 钩子上自动评审 AI 编码代理的当前任务是否真正完成。
 
 ### 痛点
 
@@ -27,9 +27,11 @@
 
 ### Fail-open 优先
 
-任何异常路径都不阻塞 session——评审子进程失败、模型超时、预算超限、TUI 默认未启用，session 都正常结束并 fail-open 放行。delivery 的存在是**增强**而非阻断。
+任何异常路径都不阻塞 session——评审子进程失败、模型超时、预算超限、`ctx.models.resolve()` 解析失败（不换 fallback），session 都正常结束并 fail-open 放行。delivery 的存在是**增强**而非阻断。
 
-### 五种评审状态 + 行为映射
+注：TUI 默认启用**异步后台**评审（shipped `enable_tui_review: true`）——`session_stop` 立即返回不阻塞退出，评审结果到达后推送可见消息；如需关闭改 `delivery/config.json` 该字段即可。
+
+### 评审状态与静默门行为
 
 | 状态 | 行为 |
 |---|---|
@@ -126,5 +128,5 @@ MIT
 
 ## 致谢
 
-- [Oh My Pi](https://github.com/) — 父项目
-- 模型：[gpt-5.6-terra](https://) — 默认评审模型
+- 父项目：Oh My Pi (omp)
+- 默认评审模型：`gpt-5.6-terra:high`（可通过 `delivery/config.json` 修改）
