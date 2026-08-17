@@ -14,28 +14,47 @@ delivery 是一个 omp `session_stop` 钩子扩展。AI 编码代理完成任务
 
 ## 快速开始
 
-### 1. 安装（用户选择其一）
+### 1. 安装
 
-**方式 A：全局自动发现**
+**首次安装**（全新部署，`~/.omp/agent/extensions/delivery` 不存在）：
 
 ```bash
-# 先清理旧目录，确保重复安装不会生成 delivery/delivery
+cp -R delivery ~/.omp/agent/extensions/delivery
+```
+
+**更新到新版本**（保留本地 config.json 等修改）：
+
+```bash
+# 用 rsync 排除 config.json（推荐）
+rsync -a --exclude='config.json' delivery/ ~/.omp/agent/extensions/delivery/
+```
+
+或手动备份恢复：
+
+```bash
+cp ~/.omp/agent/extensions/delivery/config.json /tmp/delivery-config.json.bak
+cp -R delivery ~/.omp/agent/extensions/delivery
+mv /tmp/delivery-config.json.bak ~/.omp/agent/extensions/delivery/config.json
+```
+
+**清洁重装**（⚠️ 会重置 config.json 到 shipped 默认——**会丢失你的自定义配置**，仅在配置损坏/不可用时使用）：
+
+```bash
 rm -rf ~/.omp/agent/extensions/delivery
-# 再复制为幂等安装
 cp -R delivery ~/.omp/agent/extensions/delivery
 ```
 
 下次 `omp` 启动自动加载。
 
-**方式 B：单实例命令（推荐验证 / 避免双重加载）**
+**单实例命令（不安装直接加载，推荐验证 / 避免双重加载）**
 
 在仓库根目录运行：
 
 ```bash
-omp -p --extension delivery/index.ts --no-extensions "你的开发任务"
+omp -p -e delivery/index.ts --no-extensions "你的开发任务"
 ```
 
-`--no-extensions` 会关闭自动发现，只加载这一个扩展。若已用方式 A 安装，请勿再重复加 `--extension`，否则会加载两份并产生重复评审结果。
+`--no-extensions` 会关闭自动发现，只加载这一个扩展。若已用上面任一方式安装，请勿再重复加 `-e delivery/index.ts`，否则会加载两份并产生重复评审结果。
 
 ### 2. 第一次使用
 
@@ -45,13 +64,13 @@ omp -p --extension delivery/index.ts --no-extensions "你的开发任务"
 omp -p "在 /tmp/test 目录下创建 hello.txt，写入 'Hello delivery'"
 ```
 
-如果用方式 B 单实例命令，则执行：
+session 结束时**默认配置下**（`min_assistant_turns_increment=10`）短任务会 **silent return 不评审**——这是预期的 fail-open 行为（避免短促重复评审噪音）。要触发评审，三选一：
 
-```bash
-omp -p --extension delivery/index.ts --no-extensions "在 /tmp/test 目录下创建 hello.txt，写入 'Hello delivery'"
-```
+1. 让代理产生 ≥ 10 个 assistant 消息（多步骤任务）
+2. 临时设 `min_assistant_turns_increment: 0`（关闭静默门）
+3. 用 `omp -p --mode=json ...` + 检查 session JSONL 是否有 `delivery.review` entry
 
-session 结束时会自动触发评审。如果任务真正完成（含写入证据），推送 `delivery.review` 状态 `done`。
+如果任务真正完成（含写入证据），推送 `delivery.review` 状态 `done`。
 
 ### 3. 查看评审结果
 
@@ -104,7 +123,7 @@ session 结束时会自动触发评审。如果任务真正完成（含写入证
 rm -rf ~/.omp/agent/extensions/delivery
 ```
 
-如果用的是单实例命令，移除命令中的 `--extension delivery/index.ts` 即可。
+如果用的是单实例命令，移除命令中的 `-e delivery/index.ts --no-extensions` 即可。
 
 ## 进阶
 
