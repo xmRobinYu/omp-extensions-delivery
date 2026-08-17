@@ -92,15 +92,18 @@ session 结束后检查 `~/.omp/agent/sessions/` 下本次会话的 JSONL 文件
 
 ## 五种评审结果
 
-| 状态 | 含义 | 自动行为 |
-|---|---|---|
-| `done` | 任务真正完成 | session 正常结束 |
-| `continue` | 任务未完成，代理可继续 | 自动续跑新回合，携带反馈 |
-| `need_user` | 代理重复空转或缺关键信息 | 等待你决策 |
-| `fail` | 评审出错 | session 正常结束（fail-open） |
-| `skip` | 跳过评审（静默门 / 预算 / 配置跳过） | session 正常结束 |
+| 状态 | 含义 | 自动行为 | 是否产生 entry |
+|---|---|---|---|
+| `done` | 任务真正完成 | session 正常结束 | ✓ |
+| `continue` | 任务未完成，代理可继续 | 自动续跑新回合，携带反馈 | ✓ |
+| `need_user` | 代理重复空转或缺关键信息 | 等待你决策 | ✓ |
+| `fail` | 评审出错 | session 正常结束（fail-open） | ✓ |
+| `skip` | 评审被跳过但产生 entry（预算超限 / 无 userInput / 模型解析失败 / TUI 默认未启用） | session 正常结束（fail-open） | ✓ |
+| `silent` | 静默门命中：未达 `min_assistant_turns_increment` 阈值 | session 正常结束（不产生 entry、不推送可见消息） | ✗ |
 
-详见 README 五种状态章节。
+**注**：表中前五种状态都会产生 `delivery.review` entry，`details.reason` 字段为中文可读；`silent`（静默门命中）是单独的预期 fail-open 行为，**不产生任何 entry**——参见"验证是否评审触发"小节。
+
+详见 `delivery/README.md` 的 Fail-open 行为与评审状态映射章节。
 
 ## 配置调整
 
