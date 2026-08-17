@@ -1,0 +1,14 @@
+{
+  "review_model": "otokapi/gpt-5.6-terra:high",
+  "max_trigger_percent": 90,
+  "max_trigger_tokens": 500000,
+  "max_review_tokens": 10000,
+  "context_window_messages": 20,
+  "enable_compression": true,
+  "enable_tui_review": true,
+  "review_timeout_seconds": 60,
+  "max_continue_rounds": 3,
+  "min_assistant_turns_increment": 10,
+  "message_truncate_chars": 8000,
+  "package_max_chars": 100000
+}
