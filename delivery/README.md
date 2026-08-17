@@ -47,10 +47,56 @@ delivery/
 
 | 字段 | 代码 fallback（src/config.ts） | shipped config.json |
 |---|---|---|
-| `review_model` | `deepseek-proxy/deepseek-v4-flash` | `otokapi/gpt-5.6-terra:high` |
+| `review_model` | `deepseek-proxy/deepseek-v4-flash` | `gpt-5.6-terra:high` |
 | `enable_tui_review` | `false` | `true` |
 
 clone 后实际加载的是 `config.json`（如存在）→ shipped 行为；删除 `config.json` 或修改字段可切回 fallback。其它未列字段均无差异。
+
+## 使用说明
+
+### 这是什么
+
+delivery 是 omp 的 session_stop 钩子扩展。当 `omp -p`（headless）或 TUI session 结束时，自动启动独立只读的评审子进程判断当前 dev 任务是否真正完成。
+
+### 五种评审结果与行为
+
+| 状态 | 行为 | 触发场景 |
+|---|---|---|
+| `done` | 推送 `delivery.review` 可见消息，session 正常结束 | 任务完成、证据齐全 |
+| `continue` | 推送 `delivery.review` + `delivery.continue` 自动续跑新回合（`triggerTurn: true`），携带评审反馈 | 任务未完成但代理可继续 |
+| `need_user` | 推送 `delivery.review` 可见消息，session 结束待用户决策 | 代理重复空转、缺关键信息 |
+| `fail` | 推送 `delivery.review` 可见消息（reason 中文），fail-open 放行 session | 评审子进程出错 |
+| `skip` | 推送 `delivery.review` 可见消息（reason 中文映射），fail-open | 静默门命中 / 预算超限 / 无 userInput / TUI 默认 / 模型解析失败 |
+
+### 典型工作流
+
+1. **启动 headless 会话**（最常见）：
+   ```
+   omp -p --mode=json "<开发任务描述>"
+   ```
+   session 结束时自动评审；返回 `continue` 时自动续跑直到 `done` 或 `need_user`。
+
+2. **TUI 会话**（默认不评审）：
+   ```
+   omp
+   ```
+   退出时**不**自动评审（尊重用户退出意图，FR-014）。如需评审，设 `enable_tui_review: true` 启用**异步后台**评审——session 立即返回，评审结果到达后推送可见消息。
+
+3. **单实例 E2E 验证**（避免双重加载）：
+   ```
+   omp -p --mode=json --thinking=off --no-extensions -e <delivery/index.ts 路径> "<测试 prompt>"
+   ```
+   必须加 `--no-extensions` 防止与 `~/.omp/agent/extensions` 同时加载产生重复 review 行。
+
+### 自定义行为
+
+修改 `delivery/config.json` 调整：
+- `review_model`：评审模型（详见配置表）
+- `max_trigger_percent` / `max_trigger_tokens`：预算上限
+- `min_assistant_turns_increment`：静默门阈值（`0` 关闭）
+- `enable_tui_review`：TUI 异步评审开关
+
+详见 `## 配置` 章节。
 
 ## 静默门
 
