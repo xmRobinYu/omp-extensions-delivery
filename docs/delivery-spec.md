@@ -228,7 +228,7 @@ session_stop(event, ctx)
 
 ### Risks / Open Questions
 - TUI 退出原因不可区分 → 已记录为约束（FR-014）
-- 上游模型代理曾挂起 >35s；headless 25s clamp 会 fail（fail-open 放行），TUI 异步不再阻塞但结果可能迟到或超时；当前 review_model=otokapi/gpt-5.6-terra:high，建议监控响应稳定性
+- 上游模型代理曾挂起 >35s；headless 25s clamp 会 fail（fail-open 放行），TUI 异步不再阻塞但结果可能迟到或超时；当前 review_model=otokapi/gpt-5.6-terra:high（历史 E2E 验证模型；当前 shipped 为 `gpt-5.6-terra:high`，见 `delivery/config.json`），建议监控响应稳定性
 - `pi.exec` 环境继承 → 子进程需 `--no-*` 全套隔离参数
 
 ### Mission Handoff
