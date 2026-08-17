@@ -19,7 +19,10 @@ delivery 是一个 omp `session_stop` 钩子扩展。AI 编码代理完成任务
 **方式 A：全局自动发现**
 
 ```bash
-cp -r delivery ~/.omp/agent/extensions/delivery
+# 先清理旧目录，确保重复安装不会生成 delivery/delivery
+rm -rf ~/.omp/agent/extensions/delivery
+# 再复制为幂等安装
+cp -R delivery ~/.omp/agent/extensions/delivery
 ```
 
 下次 `omp` 启动自动加载。
