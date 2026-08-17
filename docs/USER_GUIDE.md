@@ -32,8 +32,14 @@ rsync -a --exclude='config.json' delivery/ ~/.omp/agent/extensions/delivery/
 或手动备份恢复：
 
 ```bash
+# 先备份
 cp ~/.omp/agent/extensions/delivery/config.json /tmp/delivery-config.json.bak
+
+# 清洁替换（先删旧目录避免嵌套）
+rm -rf ~/.omp/agent/extensions/delivery
 cp -R delivery ~/.omp/agent/extensions/delivery
+
+# 恢复配置
 mv /tmp/delivery-config.json.bak ~/.omp/agent/extensions/delivery/config.json
 ```
 
@@ -64,11 +70,16 @@ omp -p -e delivery/index.ts --no-extensions "你的开发任务"
 omp -p "在 /tmp/test 目录下创建 hello.txt，写入 'Hello delivery'"
 ```
 
-session 结束时**默认配置下**（`min_assistant_turns_increment=10`）短任务会 **silent return 不评审**——这是预期的 fail-open 行为（避免短促重复评审噪音）。要触发评审，三选一：
+session 结束时**默认配置下**（`min_assistant_turns_increment=10`）短任务会 **silent return 不评审**——这是预期的 fail-open 行为（避免短促重复评审噪音）。
+
+**触发评审**（二选一）：
 
 1. 让代理产生 ≥ 10 个 assistant 消息（多步骤任务）
-2. 临时设 `min_assistant_turns_increment: 0`（关闭静默门）
-3. 用 `omp -p --mode=json ...` + 检查 session JSONL 是否有 `delivery.review` entry
+2. 临时设 `min_assistant_turns_increment: 0`（关闭静默门）——编辑 `~/.omp/agent/extensions/delivery/config.json` 把该字段改为 `0`，或 `jq '.min_assistant_turns_increment = 0' ~/.omp/agent/extensions/delivery/config.json > tmp && mv tmp ~/.omp/agent/extensions/delivery/config.json`
+
+**验证是否评审触发**：
+
+用 `omp -p --mode=json` 启动 + session 结束后检查 session JSONL（在 `~/.omp/agent/sessions/`）是否有 `delivery.review` entry。如无，可能是静默门命中 / 预算超限 / 模型解析失败——查看失败原因可读 `delivery.review` 的 `details.reason` 字段或 README 的 Fail-open 行为章节。
 
 如果任务真正完成（含写入证据），推送 `delivery.review` 状态 `done`。
 
