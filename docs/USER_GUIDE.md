@@ -90,7 +90,7 @@ session 结束后检查 `~/.omp/agent/sessions/` 下本次会话的 JSONL 文件
 
 评审结果写入 omp 的 session JSONL（在 `~/.omp/agent/sessions/`）。TUI/headless 模式下推送 `[delivery]` 开头的可见消息。
 
-## 五种评审结果
+## 评审状态与静默门行为
 
 | 状态 | 含义 | 自动行为 | 是否产生 entry |
 |---|---|---|---|
