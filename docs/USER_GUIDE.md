@@ -79,7 +79,10 @@ session 结束时**默认配置下**（`min_assistant_turns_increment=10`）短�
 
 **验证是否评审触发**：
 
-用 `omp -p --mode=json` 启动 + session 结束后检查 session JSONL（在 `~/.omp/agent/sessions/`）是否有 `delivery.review` entry。如无，可能是静默门命中 / 预算超限 / 模型解析失败——查看失败原因可读 `delivery.review` 的 `details.reason` 字段或 README 的 Fail-open 行为章节。
+session 结束后检查 `~/.omp/agent/sessions/` 下本次会话的 JSONL 文件中是否有 `delivery.review` entry：
+
+- **有 entry** → 评审触发成功。读该 entry 的 `details.reason`（中文）了解评审子进程结论或跳过原因（预算超限 / 模型解析失败 / TUI 未启用等）。
+- **无 entry** → 多为**静默门命中**（默认 `min_assistant_turns_increment=10` 时 assistant 消息数不足）。这是预期的 fail-open 行为，不是错误。如确需触发评审，参见上一节"触发评审"。
 
 如果任务真正完成（含写入证据），推送 `delivery.review` 状态 `done`。
 
